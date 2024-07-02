@@ -3,13 +3,11 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import "../main.css"
 
-const PomodoroTimer = () => {
+const PomodoroTimer = ({ workTime, breakTime }) => {
   // Durum (state) değişkenlerini tanımlıyoruz
-  const [time, setTime] = useState(1500);
+  const [time, setTime] = useState(workTime);
   const [isActive, setIsActive] = useState(false); // Sayaç aktif mi değil mi
   const [isBreak, setIsBreak] = useState(false); // Mola zamanı mı değil mi
-  const [workTime, setWorkTime] = useState(1500); // Çalışma süresi
-  const [breakTime, setBreakTime] = useState(300); // Mola süresi
 
   useEffect(() => {
     setTime(workTime); // workTime prop değiştiğinde zamanlayıcıyı güncelle
