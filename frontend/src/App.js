@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import PomodoroTimer from "./components/PomodoroTimer";
 import Settings from "./components/Settings";
-import { BrowserRouter as Router, Route, Routes, Link } from "react-router-dom";
+import { HashRouter as Router, Route, Routes, Link } from "react-router-dom";
 
 function App() {
   const [workTime, setWorkTime] = useState(1500); // 25 dakika
