@@ -1,97 +1,106 @@
-// src/components/PomodoroTimer.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import "../main.css"
+import "../main.css";
 
 const PomodoroTimer = ({ workTime, breakTime }) => {
-  // Durum (state) değişkenlerini tanımlıyoruz
   const [time, setTime] = useState(workTime);
-  const [isActive, setIsActive] = useState(false); // Sayaç aktif mi değil mi
-  const [isBreak, setIsBreak] = useState(false); // Mola zamanı mı değil mi
-
-  useEffect(() => {
-    setTime(workTime); // workTime prop değiştiğinde zamanlayıcıyı güncelle
-  }, [workTime]);
-
-
-  useEffect(() => {
-    let interval = null;
-
-    if (isActive) {
-      // Sayaç aktifse, her saniyede bir zamanı azaltıyoruz
-      interval = setInterval(() => {
-        setTime((prevTime) => prevTime - 1);
-      }, 1000);
-    } else if (!isActive && time !== 0) {
-      // Sayaç aktif değilse ve zaman 0 değilse, interval'i temizliyoruz
-      clearInterval(interval);
-    }
-
-    if (time === 0) {
-      // Zaman sıfırlandığında
-      if (isBreak) {
-        // Mola zamanıysa, çalışma süresine geçiyoruz
-        setTime(workTime);
-        setIsBreak(false);
-      } else {
-        // Çalışma zamanıysa, mola süresine geçiyoruz
-        setTime(breakTime);
-        setIsBreak(true);
-      }
-      playSound();
-    }
-
-    return () => clearInterval(interval); // Bileşen her güncellendiğinde interval'i temizliyoruz
-  }, [isActive, time, isBreak, workTime, breakTime]);
+  const [isActive, setIsActive] = useState(false);
+  const [isBreak, setIsBreak] = useState(false);
+  const requestRef = useRef();
+  const previousTimeRef = useRef();
 
   const playSound = () => {
-    const audio = new Audio('alarm_sound.mp3'); // Alarm sesi dosyasını çalıyoruz
+    const audio = new Audio('alarm_sound.mp3');
     audio.play();
   };
 
   const playSound2 = () => {
     const audio = new Audio('click_sound.mp3');
-    audio.play()
-  }
+    audio.play();
+  };
 
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${minutes}:${secs < 10 ? '0' : ''}${secs}`; // Zamanı dakika ve saniye formatında gösteriyoruz
+    return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
+  const animate = (time) => {
+    if (previousTimeRef.current != null) {
+      const deltaTime = (time - previousTimeRef.current) / 1000;
+
+      if (isActive) {
+        setTime((prevTime) => Math.max(prevTime - deltaTime, 0));
+      }
+    }
+    previousTimeRef.current = time;
+    requestRef.current = requestAnimationFrame(animate);
+  };
+
+  useEffect(() => {
+    if (time === 0) {
+      if (isBreak) {
+        setTime(workTime);
+        setIsBreak(false);
+      } else {
+        setTime(breakTime);
+        setIsBreak(true);
+      }
+      playSound();
+    }
+  }, [time, isBreak, workTime, breakTime]);
+
+  useEffect(() => {
+    if (isActive) {
+      requestRef.current = requestAnimationFrame(animate);
+    } else {
+      if (requestRef.current) {
+        cancelAnimationFrame(requestRef.current);
+      }
+    }
+    return () => cancelAnimationFrame(requestRef.current);
+  }, [isActive]);
+
+  useEffect(() => {
+    setTime(workTime);
+  }, [workTime]);
+
   const handleStartPause = () => {
-    playSound2()
-    setIsActive(!isActive); // Sayaç duraklatılıyor veya başlatılıyor
+    playSound2();
+    setIsActive(!isActive);
   };
 
   const handleReset = () => {
-    playSound2()
-    setIsActive(false); // Sayaç duraklatılıyor
-    setTime(workTime); // Zaman çalışma süresine sıfırlanıyor
-    setIsBreak(false); // Çalışma moduna geçiliyor
+    playSound2();
+    setIsActive(false);
+    setTime(workTime);
+    setIsBreak(false);
   };
 
   const handleToggleMode = () => {
-    playSound2()
+    playSound2();
     if (isBreak) {
-      setIsBreak(false)
-      setTime(workTime)
-    }else {
-      setIsBreak(true)
-      setTime(breakTime)
+      setIsBreak(false);
+      setTime(workTime);
+    } else {
+      setIsBreak(true);
+      setTime(breakTime);
     }
-    setIsActive(false) // Mod değiştirirken sayaç duraklatılır.
-  }
+    setIsActive(false);
+  };
 
   return (
     <div className='center'>
       <div>
         <h1>{isBreak ? 'Break Time' : 'Work Time'}</h1>
         <div className='timer'>{formatTime(time)}</div>
-        <button onClick={handleStartPause} className='button'>{isActive ? 'Pause' : 'Start'}</button>
+        <button onClick={handleStartPause} className='button'>
+          {isActive ? 'Pause' : 'Start'}
+        </button>
         <button onClick={handleReset} className='button'>Reset</button>
-        <button onClick={handleToggleMode} className='button'>{isBreak ? 'Switch to Work' : 'Switch to Break'}</button>
+        <button onClick={handleToggleMode} className='button'>
+          {isBreak ? 'Switch to Work' : 'Switch to Break'}
+        </button>
         <br />
         <Link to="/settings">
           <button className='button' onClick={playSound2}>Settings</button>
